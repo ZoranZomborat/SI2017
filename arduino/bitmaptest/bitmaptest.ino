@@ -1,6 +1,7 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
 #include "bitmaptest.h"
+#include "tetris_bitmaps.h"
 #include <SPI.h>
 #include <MemoryFree.h>
 
@@ -28,6 +29,7 @@ Piece pieces [PIECE_NUM];
 uint8_t screenPiece[SCREEN_PIECE_SIZE];
 
 uint8_t piece_buff[PIECE_SIZE*4];
+uint8_t *dump;
 
 void initPieces(){
 
@@ -100,9 +102,23 @@ void loop() {
   uint8_t b=204;
   int x = 4;
   int y = 4;
-//  for(i=0;i<PIECE_SIZE*2;i++){
-//     piece_buff[i] = pgm_read_byte(s_piece+i);
-//  }
+  dump = o_bmp;
+  dump = i_bmp;
+  dump = s_bmp;
+  dump = z_bmp;
+  dump = l_bmp;
+  dump = j_bmp;
+  dump = t_bmp;
+  dump = o_piece;
+  dump = i_piece;
+  dump = s_piece;
+  dump = z_piece;
+  dump = l_piece;
+  dump = j_piece;
+  dump = t_piece;
+  for(i=0;i<PIECE_SIZE*2;i++){
+     piece_buff[i] = pgm_read_byte(s_piece+i);
+  }
   generateBitmapGivenPPB(s_piece, screenPiece, 2);
   tft.drawBitmap(x, y, screenPiece, 8, 8, tft.Color565(0,255,255));
 
@@ -140,12 +156,12 @@ void loop() {
   //tft.drawBitmap(x,y,bmp6,24,24,tft.Color565(255,255,0));
   tft.fillScreen(ST7735_WHITE);
   x += 26;
-//  for(i=0;i<PIECE_SIZE*4;i++){
-//     piece_buff[i] = pgm_read_byte(l_piece+i);
-//  }
+  for(i=0;i<PIECE_SIZE*4;i++){
+     piece_buff[i] = pgm_read_byte(l_piece+i);
+  }
   while(1){
       Serial.println(freeMemory());
-      generateBitmapGivenPPB(&l_piece[rot*PIECE_SIZE], screenPiece, 8);
+      generateBitmapGivenPPB(&piece_buff[rot*PIECE_SIZE], screenPiece, 8);
       tft.drawBitmap(x, y, screenPiece, 32, 32, tft.Color565(255,0,255));
       delay(100);
       tft.fillRect(x,y,32,32,ST7735_BLACK);

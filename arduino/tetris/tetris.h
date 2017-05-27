@@ -1,24 +1,92 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
-#include "tetris_windows.h"
+#define LIMIT_W(x)  x=(x<0)?0:(x>(BOARD_W-PIECE_W)?BOARD_W-PIECE_W:x)
+#define LIMIT_H(y)  y=(y>(BOARD_H-PIECE_H+1))?(BOARD_H-PIECE_H+1):(y<(0)?0:y) //leave one more for stucking to rock bottom
+
+#define TRANSLATE_X(x) ((x-BOARD_PAD_LEFT)*PP_BLOCK_W+SCREEN_PAD_LEFT)
+#define TRANSLATE_Y(y) (y*PP_BLOCK_H+SCREEN_PAD_TOP)
+
+#define PIECE_NUM   7
+#define PIECE_H     4
+#define PIECE_W     4
+#define PIECE_SIZE (PIECE_H*PIECE_W)
+
+#define PP_BLOCK_H        8
+#define PP_BLOCK_W        8
+#define PP_BLOCK          (PP_BLOCK_W*PP_BLOCK_H)
+
+#define PP_SCREEN_BLOCK_H (PP_BLOCK_H*PIECE_H)
+#define PP_SCREEN_BLOCK_W (PP_BLOCK_W*PIECE_W)
+
+#define BMP_SIZE          (PP_BLOCK * PIECE_SIZE / 8)
+
+#define BOARD_SCREEN_H    15
+#define BOARD_SCREEN_W    10
+
+#define BOARD_SCREEN_PX_H BOARD_SCREEN_H*PP_BLOCK_H
+#define BOARD_SCREEN_PX_W BOARD_SCREEN_W*PP_BLOCK_W
+
+#define BOARD_PAD_H       2
+#define BOARD_PAD_LEFT    2
+#define BOARD_PAD_RIGHT   1
+#define BOARD_PAD_W       (BOARD_PAD_LEFT + BOARD_PAD_RIGHT)
+
+#define BOARD_H           (BOARD_SCREEN_H + BOARD_PAD_H)
+#define BOARD_W           (BOARD_SCREEN_W + BOARD_PAD_W)
+#define BOARD_SIZE        (BOARD_H * BOARD_W)
+
+#define SCREEN_PAD_LEFT   4 //padding for screen game board (pixels)
+#define SCREEN_PAD_RIGHT  4
+#define SCREEN_PAD_TOP    4
+#define SCREEN_PAD_BOTTOM 4
+
+#define SCREEN_H_PADDED   (BOARD_SCREEN_PX_H + SCREEN_PAD_BOTTOM + SCREEN_PAD_TOP)
+#define SCREEN_W_PADDED   (BOARD_SCREEN_PX_W + SCREEN_PAD_LEFT + SCREEN_PAD_RIGHT)
+
+#define X_START           (BOARD_SCREEN_W / 2 + BOARD_PAD_LEFT - PIECE_W / 2)
+#define Y_START           0
+#define ROT_START         0
+
+#define BUTTON_NUM 5
 
 typedef struct _piece{
-	uint8_t *data;		//pointer to piece data
-	char	name;		//piece name
+	uint8_t *data;	//pointer to piece data
 	uint8_t rotation;	//rotation count 1 .. 4
 	uint16_t color;		//colour RGB 565
-	uint8_t	*windows;	//block vertex array
-	uint8_t numWindows;	//number of blocks, needed for drawing
+  uint8_t *windows; //block vertex array
+  uint8_t numWindows; //number of blocks, needed for drawing
 }Piece;
 
-uint8_t o_piece[16]={
+typedef enum{
+  EVENT_NULL,
+  EVENT_FALL,
+  EVENT_LEFT,
+  EVENT_RIGHT,
+  EVENT_ROT,
+  EVENT_PAUSE
+} tetrisEvent;
+
+typedef enum{
+  BUTT_LEFT,
+  BUTT_ROT,
+  BUTT_RIGHT,
+  BUTT_DOWN,
+  BUTT_PAUSE
+} tetrisButton;
+
+typedef struct _button{
+  int upperLimit, lowerLimit;
+  tetrisEvent action;
+} Button;
+
+const uint8_t o_piece[16] ={
 		   0x0,		0x0,	0x0,	0x0, 
 		   0x0,		0xff,	0xff,	0x0,
 		   0x0,		0xff,	0xff,	0x0,
 		   0x0,		0x0,	0x0,	0x0};
 
-uint8_t i_piece[2*16]={
+const uint8_t i_piece[2*16] ={
 		   0x0, 	0x0, 	0x0,	0x0, //rot 1
 		   0xff, 	0xff, 	0xff,	0xff,
 		   0x0, 	0x0, 	0x0,	0x0,
@@ -29,7 +97,7 @@ uint8_t i_piece[2*16]={
 		   0x0, 	0x0, 	0xff,	0x0,
 		   0x0, 	0x0, 	0xff,	0x0};
 		   
-uint8_t s_piece[2*16]={
+const uint8_t s_piece[2*16] ={
 		   0x0, 	0x0, 	0x0, 	0x0, //rot 1
 		   0x0, 	0x0, 	0xff, 	0xff,
 		   0x0, 	0xff, 	0xff, 	0x0,
@@ -41,7 +109,7 @@ uint8_t s_piece[2*16]={
 		   0x0, 	0x0, 	0x0, 	0x0
 			};
 			
-uint8_t z_piece[2*16]={
+const uint8_t z_piece[2*16] ={
 		   0x0, 	0x0, 	0x0,	0x0, //rot 1
 		   0x0, 	0xff, 	0xff,	0x0,
 		   0x0, 	0x0, 	0xff,	0xff,
@@ -53,7 +121,7 @@ uint8_t z_piece[2*16]={
 		   0x0, 	0x0, 	0x0,	0x0
 			};
 			
-uint8_t l_piece[4*16]={
+const uint8_t l_piece[4*16] ={
 		   0x0, 	0x0, 	0x0,	0x0, //rot 1
 		   0x0, 	0xff, 	0xff,	0xff,
 		   0x0, 	0xff, 	0x0,	0x0,
@@ -75,7 +143,7 @@ uint8_t l_piece[4*16]={
 		   0x0, 	0x0, 	0x0,	0x0
 			};
 			
-uint8_t j_piece[4*16]={
+const uint8_t j_piece[4*16] ={
 		   0x0, 	0x0, 	0x0,	0x0, //rot 1
 		   0x0, 	0xff, 	0xff,	0xff,
 		   0x0, 	0x0, 	0x0,	0xff,
@@ -97,7 +165,7 @@ uint8_t j_piece[4*16]={
 		   0x0, 	0x0, 	0x0,	0x0
 			};
 			
-uint8_t t_piece[4*16]={
+const uint8_t t_piece[4*16] ={
 		   0x0, 	0x0, 	0x0,	0x0, //rot 1
 		   0x0, 	0xff, 	0xff,	0xff,
 		   0x0, 	0x0, 	0xff,	0x0,
@@ -118,5 +186,4 @@ uint8_t t_piece[4*16]={
 		   0x0, 	0x0, 	0xff,	0x0,
 		   0x0, 	0x0, 	0x0,	0x0
 			};
-
 #endif

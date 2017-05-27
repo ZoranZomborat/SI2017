@@ -33,6 +33,11 @@
 #define BOARD_W				(BOARD_SCREEN_W + BOARD_PAD_W)
 #define BOARD_SIZE			(BOARD_H * BOARD_W)
 
+#define SCREEN_PAD_LEFT		4
+#define SCREEN_PAD_RIGHT	4
+#define SCREEN_PAD_TOP		4
+#define SCREEN_PAD_BOTTOM	4
+
 #define X_START				(BOARD_SCREEN_W / 2 + BOARD_PAD_LEFT - PIECE_W / 2)
 #define Y_START				0
 #define ROT_START			0
@@ -121,6 +126,23 @@ void generateBitmap(uint8_t * pieceData) {
 	free(bmp);
 }
 
+void traceWindows(){
+	int i;
+	Window window;
+
+	for(i=0;i<PIECE_NUM;i++){
+		Piece piece = pieces[i];
+		for(j=0;j<PIECE_SIZE;j++){
+			if(piece.data[j]){
+				int j,k;
+				window.x0=j%PIECE_W;
+				window.y0=j/PIECE_W;
+
+			}
+		}
+	}
+}
+
 FILE *fout;
 void formatBitmap(uint8_t *bmp, uint8_t last){
 
@@ -129,9 +151,9 @@ void formatBitmap(uint8_t *bmp, uint8_t last){
 		for (j = 0; j < (PIECE_W * PP_BLOCK_W / 8); j++) {
 			int inIdx = i * (PIECE_W * PP_BLOCK_W / 8) + j;
 			if(last && i==( PIECE_H * PP_BLOCK_H - 1)&& j== (PIECE_W * PP_BLOCK_W / 8 - 1))
-				fprintf(fout,"%s\t", byte_to_binary(bmp[inIdx]));
+				fprintf(fout,"0x%X\t", bmp[inIdx]);
 			else
-				fprintf(fout,"%s,\t", byte_to_binary(bmp[inIdx]));
+				fprintf(fout,"0x%x,\t", bmp[inIdx]);
 		}
 		fprintf(fout,"\n");
 	}
@@ -147,9 +169,8 @@ void generateAllBitmaps(){
 	}
 	
 	fprintf(fout,"#ifndef TETRIS_BITMAPS_H\n#define TETRIS_BITMAPS_H\n\n");
-	fprintf(fout,"#include <stdint.h>\n\n");
 	for(i=0;i<PIECE_NUM;i++){
-		fprintf(fout,"uint8_t %c_bmp[%d] = {\n", pieces[i].name, pieces[i].rotation*BMP_SIZE);
+		fprintf(fout,"const uint8_t %c_bmp[%d] PROGMEM = {\n", pieces[i].name, pieces[i].rotation*BMP_SIZE);
 		for(j=0;j<pieces[i].rotation;j++){
 			int idx = j*PIECE_SIZE;
 			generateBitmap(&(pieces[i].data[idx]));
@@ -171,36 +192,51 @@ void initPieces(){
   pieces[0].name = 'o';
   pieces[0].data = o_piece;
   pieces[0].rotation = 1;
+  pieces[0].numWindows = 1;
+  pieces[0].windows = win_o;
 
   //I piece
   pieces[1].name = 'i';
   pieces[1].data = i_piece;
   pieces[1].rotation = 2;
+  pieces[1].numWindows = 2;
+  pieces[1].windows = win_i;
 
   //S piece
   pieces[2].name = 's';
   pieces[2].data = s_piece;
   pieces[2].rotation = 2;
+  pieces[2].numWindows = 2;
+  pieces[2].windows = win_s;
 
   //Z piece
   pieces[3].name = 'z';
   pieces[3].data = z_piece;
   pieces[3].rotation = 2;
+  pieces[3].numWindows = 2;
+  pieces[3].windows = win_z;
 
   //L piece
   pieces[4].name = 'l';
   pieces[4].data = l_piece;
   pieces[4].rotation = 4;
+  pieces[4].numWindows = 4;
+  pieces[4].windows = win_l;
 
   //J piece
   pieces[5].name = 'j';
   pieces[5].data = j_piece;
   pieces[5].rotation = 4;
+  pieces[5].numWindows = 4;
+  pieces[5].windows = win_j;
 
   //T piece
   pieces[6].name = 't';
   pieces[6].data = t_piece;
   pieces[6].rotation = 4;
+  pieces[6].numWindows = 4;
+  pieces[6].windows = win_t;
+
 }
 
 void padBoard(){
@@ -324,15 +360,24 @@ void drawBlock(uint8_t *piece, int x, int y) {
 	}
 }
 
+void translateCoordinates(int x_board, int y_board, int *x_screen, int *y_screen){
+	*(x_screen)=(x_board - BOARD_PAD_LEFT) * PP_BLOCK_W + SCREEN_PAD_LEFT;
+	*(y_screen)=(y_board) * PP_BLOCK_H + SCREEN_PAD_TOP;
+}
+
 void updateScreen(){
 	int i,j;
 	int pidx, idx;
+	int screen_x;
+	int screen_y;
+	translateCoordinates(x_prev,y_prev,&screen_x,&screen_y);
 	for(i=0;i<PIECE_H;i++) {
 		for(j=0;j<PIECE_W;j++){
 			idx = (i+x_prev)*BOARD_W + j + x_prev;
 			board.screen_arr[idx]=0x0;
 		}
 	}
+	translateCoordinates(x_curr,y_curr,&screen_x,&screen_y);
 	for(i=0;i<PIECE_H;i++) {
 		for(j=0;j<PIECE_W;j++){
 			pidx = i * PIECE_W + j;
@@ -426,7 +471,7 @@ void tetris(){
 	int i, j;
 	char c;
 	padBoard();
-	//fillBoard();
+	fillBoard();
 	//printBoard();
 	x_prev = x_curr = X_START;
 	y_prev = y_curr = 9;
@@ -483,8 +528,8 @@ void tetris(){
 int main(void) {
 
 	initPieces();
-	generateAllBitmaps();
-	//tetris();
+	//generateAllBitmaps();
+	tetris();
 	return EXIT_SUCCESS;
 }
 
