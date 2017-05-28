@@ -132,6 +132,23 @@ void Adafruit_ST7735::writedata(uint8_t c) {
 #endif
 }
 
+
+void Adafruit_ST7735::writedata16(uint16_t c) {
+#if defined (SPI_HAS_TRANSACTION)
+    SPI.beginTransaction(mySPISettings);
+#endif
+  *rsport |=  rspinmask;
+  *csport &= ~cspinmask;
+    
+  spiwrite(c>>8);
+  spiwrite(c);
+
+  *csport |= cspinmask;
+#if defined (SPI_HAS_TRANSACTION)
+    SPI.endTransaction();
+#endif
+}
+
 // Rather than a bazillion writecommand() and writedata() calls, screen
 // initialization commands and arguments are organized in these tables
 // stored in PROGMEM.  The table may look bulky, but that's mostly the
@@ -302,6 +319,12 @@ void Adafruit_ST7735::commandList(const uint8_t *addr) {
       delay(ms);
     }
   }
+  
+  writecommand(CMD_VSCLLDEF);
+  writedata16(__OFFSET);
+  writedata16(ST7735_TFTHEIGHT_144 - __OFFSET);
+  writedata16(0);
+  
 }
 
 
@@ -621,6 +644,24 @@ void Adafruit_ST7735::setRotation(uint8_t m) {
 
 void Adafruit_ST7735::invertDisplay(boolean i) {
   writecommand(i ? ST7735_INVON : ST7735_INVOFF);
+}
+
+void Adafruit_ST7735::defineScrollArea(uint16_t tfa, uint16_t bfa){
+    tfa += __OFFSET;
+    int16_t vsa = ST7735_TFTHEIGHT_144 - tfa - bfa;
+    if (vsa >= 0) {
+		writecommand(CMD_VSCLLDEF);
+		writedata16(tfa);
+		writedata16(vsa);
+		writedata16(bfa);
+    }
+}
+
+void Adafruit_ST7735::scroll(uint16_t adrs) {
+	if (adrs <= ST7735_TFTHEIGHT_144) {
+		writecommand(CMD_VSSTADRS);
+		writedata16(adrs + __OFFSET);
+	}
 }
 
 

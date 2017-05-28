@@ -1,9 +1,15 @@
 #include <Adafruit_GFX.h>    // Core graphics library
+#ifndef TFT_LIB
 #include <Adafruit_ST7735.h> // Hardware-specific library
+#else
+#include <TFT_ILI9163C.h>    // Sumotoy-library
+#endif
 #include "tetris.h"
 #include "tetris_windows.h"
 #include <SPI.h>
 #include <MemoryFree.h>
+
+//#define TFT_LIB
 
 #define TFT_CS     10
 #define TFT_RST    8
@@ -12,7 +18,11 @@
 #define TFT_SCLK   13
 #define TFT_MOSI   11
 
+#ifndef TFT_LIB
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
+#else
+TFT_ILI9163C tft = TFT_ILI9163C(__CS, __DC, __RST);
+#endif
 
 volatile uint16_t timer=3036; //start timer 2 seconds
 uint8_t button_pin = A0;
@@ -439,9 +449,26 @@ void testButtons(){
   }
 }
 
+void testScroll(){
+  int t=3;
+  while(1){
+    tft.scroll(t);
+    if (t<3) {
+      t = 10;
+    } 
+    else {
+      t--;
+    }
+  
+    delay(50);
+  }
+}
+
 void loop() {
 
   initScreenBorder();
+  tft.defineScrollArea(2,50);
+  testScroll();
   tetris();
   while(1)
   {

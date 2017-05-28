@@ -50,6 +50,8 @@ as well as Adafruit raw 1.8" TFT display
     #define F(string_literal) string_literal
 #endif
 
+#define __OFFSET 0
+
 // some flags for initR() :(
 #define INITR_GREENTAB 0x0
 #define INITR_REDTAB   0x1
@@ -86,6 +88,8 @@ as well as Adafruit raw 1.8" TFT display
 #define ST7735_RAMRD   0x2E
 
 #define ST7735_PTLAR   0x30
+#define CMD_VSCLLDEF   0x33//Vertical Scroll Definition
+#define CMD_VSSTADRS   0x37//Vertical Scrolling Start address
 #define ST7735_COLMOD  0x3A
 #define ST7735_MADCTL  0x36
 
@@ -141,6 +145,8 @@ class Adafruit_ST7735 : public Adafruit_GFX {
            fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
              uint16_t color),
            setRotation(uint8_t r),
+		   defineScrollArea(uint16_t tfa, uint16_t bfa),
+		   scroll(uint16_t adrs),
            invertDisplay(boolean i);
   uint16_t Color565(uint8_t r, uint8_t g, uint8_t b);
 
@@ -158,6 +164,7 @@ class Adafruit_ST7735 : public Adafruit_GFX {
   void     spiwrite(uint8_t),
            writecommand(uint8_t c),
            writedata(uint8_t d),
+		   writedata16(uint16_t d),
            commandList(const uint8_t *addr),
            commonInit(const uint8_t *cmdList);
 //uint8_t  spiread(void);
